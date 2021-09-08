@@ -20,12 +20,33 @@ class Vue {
 
       // if the element is a text node, then replace contents with data
       if(element.nodeType === Node.TEXT_NODE) {
-        let newTextContent = ''
-        Object.entries(this.data).forEach(([key, value]) => { 
-          newTextContent = element.textContent.replace(new RegExp(`{{ ${key} }}`, "g"), value) 
-        })
-        element.textContent = newTextContent
+        this.replaceText(element)
       }
     }
+  }
+
+  replaceText(node) {
+    let text = node.textContent
+    let result = ''
+
+    let replacing = false; 
+    let cursor = 0; // to change text inside {{ }}
+    for(let i = 0; i < text.length; i++) {
+      if(!replacing) {
+        if(text[i] === "{" && text[i + 1] === "{") { 
+          replacing = true
+          result += text.substring(cursor, i) // add up to {{ to result
+          cursor = i // set cursor to start replacing
+        }
+      } else if(replacing) {
+        if(text[i] === "}" && text[i + 1] === "}") { 
+          // i.e. cursor {{' hello '}} i
+          replacing = 0
+          result += this.data[text.substring(cursor + 2, i - 1).trim()]
+          cursor = i + 2
+        }
+      }
+    }
+    node.textContent = result
   }
 }
